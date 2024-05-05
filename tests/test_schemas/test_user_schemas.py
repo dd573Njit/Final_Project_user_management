@@ -90,9 +90,59 @@ def test_user_base_nickname_valid(nickname, user_base_data):
     user = UserBase(**user_base_data)
     assert user.nickname == nickname
 
-@pytest.mark.parametrize("nickname", ["test user", "test?user", "", "us"])
+@pytest.mark.parametrize("nickname", ["test user", "test?user", "", "us", "us" * 26])
 def test_user_base_nickname_invalid(nickname, user_base_data):
     user_base_data["nickname"] = nickname
+    with pytest.raises(ValidationError):
+        UserBase(**user_base_data)
+        
+@pytest.mark.parametrize("email", ["valid@email.com"])
+def test_user_base_email_valid(email, user_base_data):
+    user_base_data["email"] = email
+    user = UserBase(**user_base_data)
+    assert user.email == email
+
+@pytest.mark.parametrize("email", ["", "invalidemail", "invalid@email", "invalid.email", "verylong" * 32 + "@email.com"])
+def test_user_base_email_invalid(email, user_base_data):
+    user_base_data["email"] = email
+    with pytest.raises(ValidationError):
+        UserBase(**user_base_data)
+
+# Parametrized tests for first_name and last_name validation
+@pytest.mark.parametrize("first_name", ["Test", "Test First", "Test-First", "Test'First"])
+def test_user_base_first_name_valid(first_name, user_base_data):
+    user_base_data["first_name"] = first_name
+    user = UserBase(**user_base_data)
+    assert user.first_name == first_name
+
+@pytest.mark.parametrize("first_name", ["test123", "test$", "test_first", "test" * 26])
+def test_user_base_first_name_invalid(first_name, user_base_data):
+    user_base_data["first_name"] = first_name
+    with pytest.raises(ValidationError):
+        UserBase(**user_base_data)
+
+@pytest.mark.parametrize("last_name", ["Test", "Test Last", "Test-Last", "Test'Last"])
+def test_user_base_last_name_valid(last_name, user_base_data):
+    user_base_data["last_name"] = last_name
+    user = UserBase(**user_base_data)
+    assert user.last_name == last_name
+
+@pytest.mark.parametrize("last_name", ["test123", "test$", "test_last", "test" * 26])
+def test_user_base_last_name_invalid(last_name, user_base_data):
+    user_base_data["last_name"] = last_name
+    with pytest.raises(ValidationError):
+        UserBase(**user_base_data)
+
+# Parametrized tests for bio validation
+@pytest.mark.parametrize("bio", ["Bio", "Bio Test $"])
+def test_user_base_bio_valid(bio, user_base_data):
+    user_base_data["bio"] = bio
+    user = UserBase(**user_base_data)
+    assert user.bio == bio
+
+@pytest.mark.parametrize("bio", ["Bio" * 167])
+def test_user_base_bio_invalid_too_long(bio, user_base_data):
+    user_base_data["bio"] = bio
     with pytest.raises(ValidationError):
         UserBase(**user_base_data)
 
@@ -108,3 +158,47 @@ def test_user_base_url_invalid(url, user_base_data):
     user_base_data["profile_picture_url"] = url
     with pytest.raises(ValidationError):
         UserBase(**user_base_data)
+        
+@pytest.mark.parametrize("url", ["http://valid.com/" + "a" * 255 + ".jpg", "http://valid.com/profile.jg"])
+def test_user_base_url_invalid_too_long(url, user_base_data):
+    user_base_data["profile_picture_url"] = url
+    with pytest.raises(ValidationError):
+        UserBase(**user_base_data)
+
+@pytest.mark.parametrize("url", ["http://valid.com/profile.jg"])
+def test_user_base__profile_picture_url_invalid_image_extension(url, user_base_data):
+    user_base_data["profile_picture_url"] = url
+    with pytest.raises(ValidationError):
+        UserBase(**user_base_data)
+
+# Tests for UserCreate Password Validation
+def test_UserCreate_valid_password(user_create_data):
+    assert UserCreate(**user_create_data).password == user_create_data["password"]
+
+def test_UserCreate_password_too_short(user_create_data):
+    with pytest.raises(ValueError, match="Password must be at least 8 characters long."):
+        UserCreate(**{**user_create_data, "password": "Short1!"})
+
+def test_UserCreate_password_too_long(user_create_data):
+    with pytest.raises(ValueError, match="Password must be less than 128 characters long."):
+        UserCreate(**{**user_create_data, "password": "ThisIsAVeryLongPasswordThatExceeds128Characters!" * 3})
+
+def test_UserCreate_password_no_uppercase(user_create_data):
+    with pytest.raises(ValueError, match="Password must contain at least one uppercase letter."):
+        UserCreate(**{**user_create_data, "password": "nouppercase123!"})
+
+def test_UserCreate_password_no_lowercase(user_create_data):
+    with pytest.raises(ValueError, match="Password must contain at least one lowercase letter."):
+        UserCreate(**{**user_create_data, "password": "NOLOWERCASE123!"})
+
+def test_UserCreate_password_no_digit(user_create_data):
+    with pytest.raises(ValueError, match="Password must contain at least one digit."):
+        UserCreate(**{**user_create_data, "password": "NoDigitPassword!"})
+
+def test_UserCreate_password_no_special_character(user_create_data):
+    with pytest.raises(ValueError, match="Password must contain at least one special character."):
+        UserCreate(**{**user_create_data, "password": "NoSpecialCharacter123"})
+
+def test_UserCreate_password_with_space(user_create_data):
+    with pytest.raises(ValueError, match="Password must not contain spaces."):
+        UserCreate(**{**user_create_data, "password": "Space Password123!"})
