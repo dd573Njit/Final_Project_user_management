@@ -14,7 +14,9 @@ from app.utils.security import generate_verification_token, hash_password, verif
 from uuid import UUID
 from app.services.email_service import EmailService
 from app.models.user_model import UserRole
+from fastapi import HTTPException
 import logging
+import uuid
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -200,3 +202,23 @@ class UserService:
             await session.commit()
             return True
         return False
+    
+    @staticmethod
+    async def change_user_role(session: AsyncSession, user_id: uuid.UUID, new_role: str) -> User:
+        stmt = select(User).filter(User.id == user_id)
+        result = await session.execute(stmt)
+        user = result.scalar_one_or_none()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        if new_role not in UserRole._member_names_:
+            raise HTTPException(status_code=400, detail="Invalid role specified")
+        user.role = UserRole[new_role]
+        await session.commit()
+        return user
+
+    @staticmethod
+    async def check_admin_permissions(session: AsyncSession, user_id: uuid.UUID) -> bool:
+        stmt = select(User).filter(User.id == user_id)
+        result = await session.execute(stmt)
+        user = result.scalar_one_or_none()
+        return user and user.role == UserRole.ADMIN

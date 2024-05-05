@@ -33,6 +33,8 @@ from app.services.jwt_service import create_access_token
 from app.utils.link_generation import create_user_links, generate_pagination_links
 from app.dependencies import get_settings
 from app.services.email_service import EmailService
+import uuid
+from app.schemas.user_schemas import RoleUpdateRequest, RoleUpdateResponse
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 settings = get_settings()
@@ -269,3 +271,10 @@ async def verify_email(user_id: UUID, token: str, db: AsyncSession = Depends(get
     if await UserService.verify_email_with_token(db, user_id, token):
         return {"message": "Email verified successfully"}
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired verification token")
+
+@router.put("/users/{user_id}/change-role", response_model=RoleUpdateResponse)
+async def change_user_role(user_id: uuid.UUID, request: RoleUpdateRequest, db: AsyncSession = Depends(get_db)):
+    if not await UserService.check_admin_permissions(db, request.requester_id):
+        raise HTTPException(status_code=403, detail="Unauthorized access")
+    user = await UserService.change_user_role(db, user_id, request.new_role)
+    return RoleUpdateResponse(message="Role updated successfully", user_id=user.id, new_role=user.role.name)
