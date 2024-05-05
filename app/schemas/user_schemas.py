@@ -9,6 +9,7 @@ from app.models.user_model import UserRole
 from app.utils.nickname_gen import generate_nickname
 from typing import ClassVar
 from urllib.parse import urlparse
+from pydantic import BaseModel, UUID4
 
 
 def validate_url(url: Optional[str]) -> Optional[str]:
@@ -125,3 +126,12 @@ class UserListResponse(BaseModel):
     total: int = Field(..., example=100)
     page: int = Field(..., example=1)
     size: int = Field(..., example=10)
+    
+class RoleUpdateRequest(BaseModel):
+    new_role: str
+    requester_id: UUID4  # ID of the admin requesting the change
+
+class RoleUpdateResponse(BaseModel):
+    message: str
+    user_id: UUID4
+    new_role: str
