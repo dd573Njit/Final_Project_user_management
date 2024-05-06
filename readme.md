@@ -16,15 +16,25 @@
 ## RBAC Enhancement Feature (New Feature Implementation):
 - Implemented /users/{user_id}/change_role api where it will take user_id whose role has to be changed. The Request Body will contain new_role(the new role the user will get) and the requester_id(the id of admin because only admin will have the authority to change the role).
 
-![RBAC_Change_User_Role](submissions_ss/RBAC_Change_User_Role_SS.png)
+## RBAC Change User Role API
 
-![RBAC_Change_User_Role_Unauthorized_Access](submissions_ss/RBAC_Change_User_Role_Unauthorized_SS.png)
+- ![RBAC_Change_User_Role](submissions_ss/RBAC_Change_User_Role_SS.png)
 
-![RBAC_Change_User_Role_Authorized_Access](submissions_ss/RBAC_Change_User_Role_Authorized_SS.png)
+## RBAC Change User Role when an unauthorized access occurs
 
-![RBAC_Change_User_Role_Before_Role_Changed_PGAdmin](submissions_ss/RBAC_Change_User_Role_Before_Role_Changed_SS.png)
+- ![RBAC_Change_User_Role_Unauthorized_Access](submissions_ss/RBAC_Change_User_Role_Unauthorized_SS.png)
 
-![RBAC_Change_User_Role_After_Role_Changed_PGAdmin](submissions_ss/RBAC_Change_User_Role_After_Role_Changed_SS.png)
+## RBAC Change User Role when an authorized access occurs
+
+- ![RBAC_Change_User_Role_Authorized_Access](submissions_ss/RBAC_Change_User_Role_Authorized_SS.png)
+
+## PGAdmin Database when user role is NOT changed
+
+- ![RBAC_Change_User_Role_Before_Role_Changed_PGAdmin](submissions_ss/RBAC_Change_User_Role_Before_Role_Changed_SS.png)
+
+## PGAdmin Database when user role is changed from Anonymous to Manager
+
+- ![RBAC_Change_User_Role_After_Role_Changed_PGAdmin](submissions_ss/RBAC_Change_User_Role_After_Role_Changed_SS.png)
 
 ## Test Coverage:
 ![Coverage](submissions_ss/Test_Coverage_SS.png)
