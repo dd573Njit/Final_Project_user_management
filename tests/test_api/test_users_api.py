@@ -6,6 +6,7 @@ from app.models.user_model import User, UserRole
 from app.utils.nickname_gen import generate_nickname
 from app.utils.security import hash_password
 from app.services.jwt_service import decode_token  # Import your FastAPI app
+from uuid import uuid4
 
 # Example of a test function using the async_client fixture
 @pytest.mark.asyncio
@@ -306,3 +307,54 @@ async def test_list_users_unauthorized(async_client, user_token):
         headers={"Authorization": f"Bearer {user_token}"}
     )
     assert response.status_code == 403  # Forbidden, as expected for regular user
+
+@pytest.mark.asyncio
+async def test_change_role_success(async_client: AsyncClient, admin_user, admin_token, db_session):
+    user = User(
+        id=uuid4(),
+        nickname="testuser",
+        email="testuser@example.com",
+        role=UserRole.AUTHENTICATED,
+        email_verified = False,
+        hashed_password="fakehashedpassword"
+    )
+    db_session.add(user)
+    await db_session.commit()
+
+    url = f"/users/{user.id}/change-role"
+    request_data = {"new_role": "ADMIN", "requester_id": str(admin_user.id)}
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    response = await async_client.put(url, json=request_data, headers=headers)
+    assert response.status_code == 200
+    assert response.json()['new_role'] == 'ADMIN'
+
+@pytest.mark.asyncio
+async def test_change_role_unauthorized(async_client: AsyncClient, user, user_token, db_session):
+    u_user = User(
+        id=uuid4(),
+        nickname="testuser",
+        email="testuser@example.com",
+        role=UserRole.AUTHENTICATED,
+        email_verified = False,
+        hashed_password="fakehashedpassword"
+    )
+    db_session.add(user)
+    await db_session.commit()
+
+    url = f"/users/{u_user.id}/change-role"
+    request_data = {"new_role": "ADMIN", "requester_id": str(user.id)}
+    headers = {"Authorization": f"Bearer {user_token}"}
+
+    response = await async_client.put(url, json=request_data, headers=headers)
+    assert response.status_code == 403
+
+@pytest.mark.asyncio
+async def test_change_role_nonexistent_user(async_client: AsyncClient, admin_user, admin_token):
+    nonexistent_user_id = uuid4()
+    url = f"/users/{nonexistent_user_id}/change-role"
+    request_data = {"new_role": "ADMIN", "requester_id": str(admin_user.id)}
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    response = await async_client.put(url, json=request_data, headers=headers)
+    assert response.status_code == 404
