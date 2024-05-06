@@ -5,6 +5,9 @@ from app.dependencies import get_settings
 from app.models.user_model import User, UserRole
 from app.services.user_service import UserService
 from app.utils.nickname_gen import generate_nickname
+from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import uuid4
+from fastapi import HTTPException
 
 pytestmark = pytest.mark.asyncio
 
@@ -204,3 +207,25 @@ async def test_unlock_user_account(db_session, locked_user):
     assert unlocked, "The account should be unlocked"
     refreshed_user = await UserService.get_by_id(db_session, locked_user.id)
     assert not refreshed_user.is_locked, "The user should no longer be locked"
+    
+@pytest.mark.asyncio
+async def test_change_user_role_success(db_session: AsyncSession, admin_user, user):
+    new_role = "MANAGER"
+    await UserService.change_user_role(db_session, user.id, new_role)
+    await db_session.refresh(user)
+    assert user.role == UserRole.MANAGER, "Role should be updated to MANAGER"
+
+@pytest.mark.asyncio
+async def test_change_user_role_nonexistent_user(db_session: AsyncSession, admin_user):
+    nonexistent_user_id = uuid4()
+    with pytest.raises(HTTPException) as exc_info:
+        await UserService.change_user_role(db_session, nonexistent_user_id, "MANAGER")
+    assert exc_info.value.status_code == 404, "Should raise a 404 error for non-existent user"
+
+@pytest.mark.asyncio
+async def test_check_admin_permissions(db_session: AsyncSession, admin_user, user):
+    is_admin = await UserService.check_admin_permissions(db_session, admin_user.id)
+    assert is_admin, "Should return True for admin user"
+
+    is_not_admin = await UserService.check_admin_permissions(db_session, user.id)
+    assert not is_not_admin, "Should return False for non-admin user"
