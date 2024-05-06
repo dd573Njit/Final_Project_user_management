@@ -38,3 +38,6 @@
 
 ## Test Coverage:
 ![Coverage](submissions_ss/Test_Coverage_SS.png)
+
+## My Learnings from this course and Project:
+- [Link](submissions_ss/My_Learnings.pdf)
