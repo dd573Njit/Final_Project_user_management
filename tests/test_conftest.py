@@ -35,6 +35,12 @@ async def test_user_role(db_session, admin_user):
     result = await db_session.execute(select(User).filter_by(email=admin_user.email))
     stored_user = result.scalars().first()
     assert stored_user.role == UserRole.ADMIN
+    
+@pytest.mark.asyncio
+async def test_bulk_user_creation_performance(db_session, users_with_same_role_50_users):
+    result = await db_session.execute(select(User).filter_by(role=UserRole.AUTHENTICATED))
+    users = result.scalars().all()
+    assert len(users) == 50
 
 @pytest.mark.asyncio
 async def test_password_hashing(user):
